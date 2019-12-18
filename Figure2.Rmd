@@ -1,0 +1,319 @@
+---
+title: "Simulation of Core"
+author: Alex Buerkle, Maya Gans, and Gordon Custer 
+output:
+  html_notebook:
+    code_folding: hide
+---
+
+## University of Wyoming
+## 4 June 2019
+
+We load `MCMCpack` to draw random samples fron a Dirichlet.
+```{r, warning = FALSE}
+library(MCMCpack)
+library(tidyverse)
+library(ggplot2)
+library(RColorBrewer)
+library(gridExtra)
+```
+
+```{r}
+# set the structure of our simlulated taxa table (not proritions of taxa, just rows by columns and expected core)
+ntaxa<-1000
+ncore<-25
+nsites<-50
+nreads<-2e06
+nsims<-250
+```
+
+Sets ratio of relative abundance $\pi$ of core to non-core taxa.
+
+$$\frac{\pi \text{ core}}{\pi \text{ non-core}} $$
+The relative probability of drawing a member of a core taxon is dependent on how large $\frac{\pi \text{ core}}{\pi \text{ non-core}}$ is. Set intensity prameter $\theta$; this controls how much variance is allowed. 
+```{r}
+corenoncoreratio<-c(1,2,5,10,25)
+p.core<-corenoncoreratio/(ntaxa - ncore + corenoncoreratio*ncore)
+p.noncore<-( 1-(p.core*ncore) )/ (ntaxa - ncore)
+
+theta<-c(1, 2, 10, 25, 50) #intensity parameter
+```
+
+```{r}
+## do a set of simulations across input parameter values and number of replicates ------
+## set up the storage of input and output for the 25 simulation conditions
+## quantify TP (true positives) and FP (false positives)
+sim.df<-data.frame(expand.grid(corenoncoreratio=corenoncoreratio, theta=theta), 
+           p.core=rep(p.core, length(theta)), 
+           p.noncore=rep(p.noncore, length(theta)),
+
+           meanerrorHardCutTP= numeric(length(p.core) * length(theta)),
+           meanerrorPropReadTP = numeric(length(p.core) * length(theta)),
+           meanerrorPropRepsTP = numeric(length(p.core) * length(theta)),
+           meanerrorPropReadRepsTP = numeric(length(p.core) * length(theta)),
+          meanerrorHardCutFP= numeric(length(p.core) * length(theta)),
+           meanerrorPropReadFP = numeric(length(p.core) * length(theta)),
+           meanerrorPropRepsFP = numeric(length(p.core) * length(theta)),
+           meanerrorPropReadRepsFP = numeric(length(p.core) * length(theta))
+           )
+           #error2.5 = numeric(length(p.core) * length(theta)),
+           #error97.5 = numeric(length(p.core) * length(theta)))
+
+#sim.df
+```
+
+```{r}
+for(trt in 1:(nrow(sim.df))){
+    
+    # create empty vectors to store output for each method for every simulation
+    tmp.err.HardCutTP <-  numeric(nsims)
+    tmp.err.PropReadTP <- numeric(nsims)
+    tmp.err.PropRepsTP <- numeric(nsims)
+    tmp.err.PropReadRepsTP <- numeric(nsims)
+    tmp.err.HardCutFP <-  numeric(nsims)
+    tmp.err.PropReadFP <- numeric(nsims)
+    tmp.err.PropRepsFP <- numeric(nsims)
+    tmp.err.PropReadRepsFP <- numeric(nsims)
+  for(i in 1:nsims){
+    # create a single OTU table for all four methods to be compared against
+    replicateSim <- round(rdirichlet(nsites, c(rep(sim.df$p.core[trt] * sim.df$theta[trt], ncore), 
+                                               rep(sim.df$p.noncore[trt] * sim.df$theta[trt], ntaxa-ncore))) * nreads)
+    
+    # find true and false positives
+    # true positives are those that meet in the criterion in the first 1:ncore taxa.  The remaining taxa are not part of the core, so any taxa meeting the criterion in that set are false positives
+    
+    # hard cut off method
+    # tmp.err.HardCut[i] <-  sum(colSums((replicateSim >= 25)) >= 5) - ncore
+    tmp.err.HardCutTP[i] <-  sum((colSums((replicateSim >= 25)) >= 5)[1:ncore])
+    tmp.err.HardCutFP[i] <-  sum((colSums((replicateSim >= 25)) >= 5)[(ncore+1):ntaxa])
+
+    # Prop reads
+    #tmp.err.PropRead[i] <- sum(cumsum(sort(colSums(replicateSim)/sum(rowSums(replicateSim))))>=0.25)  - ncore
+    tmp.err.PropReadTP[i] <- sum((cumsum(sort(colSums(replicateSim)/sum(rowSums(replicateSim))))>=0.25)[1:ncore])
+    tmp.err.PropReadFP[i] <- sum((cumsum(sort(colSums(replicateSim)/sum(rowSums(replicateSim))))>=0.25)[(ncore+1):ntaxa])  
+    # Prop Reps
+    #tmp.err.PropReps[i] <- sum(colSums(replicateSim)>10*nrow(replicateSim))  - ncore
+    tmp.err.PropRepsTP[i] <- sum((colSums(replicateSim)>10*nrow(replicateSim))[1:ncore])  
+    tmp.err.PropRepsFP[i] <- sum((colSums(replicateSim)>10*nrow(replicateSim))[(ncore+1):ntaxa])   
+    # Thanks Alex
+    #tmp.err.PropReadReps[i] <- sum((colSums(replicateSim>0) >= (0.5 * nsites)) & (colSums(replicateSim) >= sum(replicateSim) * 1/1000) )  - ncore
+    tmp.err.PropReadRepsTP[i] <- sum(((colSums(replicateSim>0) >= (0.5 * nsites)) & (colSums(replicateSim) >= sum(replicateSim) * 1/1000) )[1:ncore]) 
+    tmp.err.PropReadRepsFP[i] <- sum(((colSums(replicateSim>0) >= (0.5 * nsites)) & (colSums(replicateSim) >= sum(replicateSim) * 1/1000) )[(ncore+1):ntaxa]) 
+  }
+  
+  # fill the dataframe from the chunk above with these values for later plotting
+  sim.df$meanerrorHardCutTP[trt] <- mean(tmp.err.HardCutTP) / ncore
+  sim.df$meanerrorPropReadTP[trt] <- mean(tmp.err.PropReadTP) / ncore
+  sim.df$meanerrorPropRepsTP[trt] <- mean(tmp.err.PropRepsTP) / ncore
+  sim.df$meanerrorPropReadRepsTP[trt] <- mean(tmp.err.PropReadRepsTP) / ncore
+  
+  sim.df$meanerrorHardCutFP[trt] <- mean(tmp.err.HardCutFP) / (ntaxa - ncore)
+  sim.df$meanerrorPropReadFP[trt] <- mean(tmp.err.PropReadFP) / (ntaxa - ncore)
+  sim.df$meanerrorPropRepsFP[trt] <- mean(tmp.err.PropRepsFP) / (ntaxa - ncore)
+  sim.df$meanerrorPropReadRepsFP[trt] <- mean(tmp.err.PropReadRepsFP) / (ntaxa - ncore)
+}
+```
+
+```{r}
+myPalette <- c("#800000", "#ffffff", "#C2D1E8", "#678BC6", "#0b45a3")
+myPalette2 <- c("#ffffff", "#C2D1E8", "#678BC6", "#0b45a3")
+myPalette3 <- c("#ffffff", "#C2D1E8")
+
+df <- data.frame(x = c(1,2,3,4,5), y = c(1,2,3,4,5))
+
+ggplot(df, aes(x = as.factor(x), y = y)) +
+  geom_bar(stat = "identity", aes(fill = as.factor(x))) +
+  scale_fill_manual(values = myPalette)
+```
+
+# True Positive
+```{r}
+sim.df_gg <- sim.df %>%
+  select(1:8) %>%
+  gather(method, prob, c(5:8)) %>%
+  mutate(method = factor(method, levels = c("meanerrorHardCutTP",
+                                            "meanerrorPropReadTP",  
+                                            "meanerrorPropRepsTP",
+                                          "meanerrorPropReadRepsTP"), labels = c("Hard Cutoff", "Proportion of Reads", "Proportion of Replicates", "Proportion of Reads and Replicates")))
+
+ggplot(sim.df_gg, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
+  geom_tile(aes(fill = prob), colour = "white") +
+  facet_wrap(.~method, nrow = 2) +
+  theme(legend.text=element_text(size=2)) +
+  theme_minimal() +
+  scale_fill_gradientn(colours = myPalette2, values = scales::rescale(c(-1000, -500, -25,0, 100, 500, 1000))) +
+  geom_text(aes(label = round(sim.df_gg$prob, digits = 2))) +
+   labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
+       y = expression(paste(theta)),
+       fill = "Mean Error") +
+  theme(strip.text.x = element_text(size = 15))
+
+ggsave("figure2.png", width = 9, height  = 8, dpi = 300)
+```
+
+# False Positive
+```{r}
+sim.df_gg <- sim.df %>%
+  select(1,2,3,4,9,10,11,12) %>%
+  gather(method, prob, c(5:8)) %>%
+  mutate(method = factor(method, levels = c("meanerrorHardCutFP",
+                                            "meanerrorPropReadFP",  
+                                            "meanerrorPropRepsFP",
+                                          "meanerrorPropReadRepsFP"), labels = c("Hard Cutoff", "Proportion of Reads", "Proportion of Replicates", "Proportion of Reads and Replicates")))
+
+ggplot(sim.df_gg, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
+  geom_tile(aes(fill = prob), colour = "white") +
+  facet_wrap(.~method, nrow = 2) +
+  theme(legend.text=element_text(size=2)) +
+  theme_minimal() +
+  scale_fill_gradientn(colours = myPalette2, values = scales::rescale(c(-1000, -500, -25,0, 100, 500, 1000))) +
+  geom_text(aes(label = round(sim.df_gg$prob, digits = 2))) +
+   labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
+       y = expression(paste(theta)),
+       fill = "Mean Error") +
+  theme(strip.text.x = element_text(size = 15))
+
+ggsave("figure3.png", width = 9, height  = 8, dpi = 300)
+```
+
+
+# TP - FP
+```{r}
+sim.df_gg <- sim.df %>%
+  mutate(HardCutoff = (sim.df$meanerrorHardCutTP - sim.df$meanerrorHardCutFP),
+         PropReads = (sim.df$meanerrorPropReadTP - sim.df$meanerrorPropReadFP),
+         PropReps = (sim.df$meanerrorPropRepsTP - sim.df$meanerrorPropRepsFP),
+         PropReadReps = (sim.df$meanerrorPropReadRepsTP - sim.df$meanerrorPropReadRepsFP)) %>%
+  select(1,2,3,4,13,14,15,16) %>%
+  gather(method, prob, c(5:8)) %>%
+  mutate(method = factor(method, levels = c("HardCutoff",
+                                            "PropReads",  
+                                            "PropReps",
+                                          "PropReadReps"), labels = c("Hard Cutoff", "Proportion of Reads", "Proportion of Replicates", "Proportion of Reads and Replicates")))
+
+ggplot(sim.df_gg, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
+  geom_tile(aes(fill = prob), colour = "white") +
+  facet_wrap(.~method, nrow = 1) +
+  theme(legend.text=element_text(size=2)) +
+  theme_minimal() +
+  scale_fill_gradientn(colours = myPalette, values = scales::rescale(c(-0.5, 0, .5, .75, 1))) +
+  geom_text(aes(label = round(sim.df_gg$prob, digits = 2))) +
+   labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
+       y = expression(paste(theta)),
+       fill = "Mean Error") +
+  theme(strip.text.x = element_text(size = 15))
+
+ggsave("figure4.png", width = 9, height  = 8, dpi = 300)
+```
+
+
+```{r}
+library(tidyverse)
+
+sim.df$meanerrorHardCutTF <- sim.df$meanerrorHardCutTP - sim.df$meanerrorHardCutFP
+sim.df$meanerrorPropReadTF <- sim.df$meanerrorPropReadTP - sim.df$meanerrorPropReadFP
+sim.df$meanerrorPropRepsTF <- sim.df$meanerrorPropRepsTP - sim.df$meanerrorPropRepsFP
+sim.df$meanerrorPropReadRepsTF <- sim.df$meanerrorPropReadRepsTP - sim.df$meanerrorPropReadRepsFP
+
+sim.df_all <- sim.df %>%
+  gather(method, mean, 5:16) %>%
+  separate(method, into = c('method', 'error'), sep = -2, convert = TRUE) 
+
+sim.df_all$method <- as.factor(sim.df_all$method)
+sim.df_all$error <- as.factor(sim.df_all$error)
+
+sim.df_all <- sim.df_all %>%
+    mutate(method = factor(method, levels = c("meanerrorHardCut",
+                                            "meanerrorPropRead",  
+                                          "meanerrorPropReadReps",
+                                          "meanerrorPropReps"), labels = c("Hard Cutoff", "Proportion of Sequence Reads", "Proportion of Sequence Reads and Replicates", "Proportion of Replicates")))
+
+sim.df_all <- sim.df_all %>%
+    mutate(error = factor(error, levels = c("FP", "TF", "TP"), labels = c("False Positive", "TP-FP", "True Positive")))
+
+sim.df_all$method <- factor(sim.df_all$method, 
+                            levels = c("Proportion of Sequence Reads", 
+                                       "Proportion of Replicates", 
+                                       "Proportion of Sequence Reads and Replicates", 
+                                       "Hard Cutoff"))
+
+ggplot(sim.df_all, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
+  geom_tile(aes(fill = mean), colour = "white") +
+  facet_grid(error~method) +
+  theme(legend.text=element_text(size=2)) +
+  theme_minimal() +
+  scale_fill_gradientn(colours = myPalette, values = scales::rescale(c(-0.5, 0, .5, .75, 1))) +
+  geom_text(aes(label = round(sim.df_all$mean, digits = 2))) +
+   labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
+       y = expression(paste(theta)),
+       fill = "Mean Error") +
+  theme(strip.text.x = element_text(size = 15))
+```
+
+```{r}
+tp <- sim.df_all %>%
+  filter(sim.df_all$error == "True Positive")
+
+tp_plot <- ggplot(tp, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
+  geom_tile(aes(fill = mean), colour = "white") +
+  facet_grid(error~method) +
+  theme(legend.text=element_text(size=2)) +
+  theme_minimal() +
+  scale_fill_gradientn(colours = myPalette2, values = scales::rescale(c(-1000, -500, -25,0, 100, 500, 1000))) +
+  geom_text(aes(label = round(tp$mean, digits = 2))) +
+   labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
+       y = expression(paste(theta)),
+       fill = "Mean Error") +
+  theme(strip.text.x = element_text(size = 15)) +
+    theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+    theme(text = element_text(size = 20))
+```
+
+```{r}
+fp <- sim.df_all %>%
+  filter(sim.df_all$error == "False Positive")
+
+fp_plot <- ggplot(fp, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
+  geom_tile(aes(fill = mean), colour = "white") +
+  facet_grid(error~method) +
+  theme(legend.text=element_text(size=2)) +
+  theme_minimal() +
+    scale_fill_gradientn(colours = myPalette2, values = scales::rescale(c(1000, 500, 25,0, -100, -500, -1000))) +
+  geom_text(aes(label = round(fp$mean, digits = 2))) +
+   labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
+       y = expression(paste(theta)),
+       fill = "Mean Error") +
+  theme(strip.text.x = element_text(size = 0)) +
+    theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+    theme(text = element_text(size = 20))
+```
+
+```{r}
+tf <- sim.df_all %>%
+  filter(sim.df_all$error == "TP-FP")
+
+tf_plot <- ggplot(tf, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
+  geom_tile(aes(fill = mean), colour = "white") +
+  facet_grid(error~method) +
+  theme(legend.text=element_text(size=2)) +
+  theme_minimal() +
+  scale_fill_gradientn(colours = myPalette, values = scales::rescale(c(-0.5, 0, .5, .75, 1))) +
+  geom_text(aes(label = round(tf$mean, digits = 2))) +
+   labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
+       y = expression(paste(theta)),
+       fill = "Mean Error") +
+  theme(strip.text.x = element_text(size = 0)) +
+  theme(text = element_text(size = 20))
+```
+
+```{r}
+
+gridExtra::grid.arrange(tp_plot, fp_plot, tf_plot, nrow = 3)
+
+g <- gridExtra::arrangeGrob(tp_plot, fp_plot, tf_plot, nrow=3) #generates g
+ggsave(file="Fig2.pdf", g, width = 25, height = 15) #saves g
+```

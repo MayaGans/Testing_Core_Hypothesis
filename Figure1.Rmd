@@ -1,0 +1,132 @@
+---
+title: "Simulation of Core"
+author: Alex Buerkle 
+output: html_notebook
+---
+
+## University of Wyoming
+## December 3, 2018
+
+We load `MCMCpack` to draw random samples
+```{r, warning = FALSE}
+library(MCMCpack)
+library(tidyverse)
+library(ggplot2)
+library(RColorBrewer)
+```
+
+```{r}
+# set the structure of our simlulated taxa table (not proritions of taxa, just rows by columns and expected core)
+ntaxa<-1000
+ncore<-25
+nsites<-50
+nreads<-2e06
+nsims<-250
+```
+
+Sets ratio of abundance of core to non-core taxa.
+
+$$\frac{\pi \text{ core}}{\pi \text{ non-core}} = 1$$
+The probability of drawing a core taxa is dependant on how large $\frac{\pi \text{ core}}{\pi \text{ non-core}}$ is. Set concentration prameter $\theta$; this controls how much variance is allowed. 
+```{r}
+corenoncoreratio<-c(1,2,5,10,25)
+p.core<-corenoncoreratio/(ntaxa - ncore + corenoncoreratio*ncore)
+p.noncore<-( 1-(p.core*ncore) )/ (ntaxa - ncore)
+
+theta<-c(1, 2, 10, 25, 50) #concentration parameter
+```
+
+```{r}
+## do a set of simulations across input parameter values and number of replicates ------
+sim.df<-data.frame(expand.grid(corenoncoreratio=corenoncoreratio, theta=theta), 
+           p.core=rep(p.core, length(theta)), 
+           p.noncore=rep(p.noncore, length(theta)),
+
+           meanerrorHardCut= numeric(length(p.core) * length(theta)),
+           meanerrorPropRead = numeric(length(p.core) * length(theta)),
+           meanerrorPropReps = numeric(length(p.core) * length(theta)),
+           meanerrorPropReadReps = numeric(length(p.core) * length(theta)))
+           #error2.5 = numeric(length(p.core) * length(theta)),
+           #error97.5 = numeric(length(p.core) * length(theta)))
+
+sim.df
+```
+
+You have 2/10000 instaed of 1/1000? Am i interpreting that correctly? 
+```{r}
+for(trt in 1:(nrow(sim.df))){
+    
+    # create empty vectors for each method for every simulation
+    tmp.err.HardCut <-  numeric(nsims)
+    tmp.err.PropRead <- numeric(nsims)
+    tmp.err.PropReps <- numeric(nsims)
+    tmp.err.PropReadReps <- numeric(nsims)
+
+  for(i in 1:nsims){
+    # create a single OTU table for all four methods to be compared against
+    replicateSim <- round(rdirichlet(nsites, c(rep(sim.df$p.core[trt] * sim.df$theta[trt], ncore), 
+                                               rep(sim.df$p.noncore[trt] * sim.df$theta[trt], ntaxa-ncore))) * nreads)
+    
+    # fill the empty vector with the values taken from the equations for each method then subtracting the amount that's actually in the core
+    
+    # hard cut off method
+    tmp.err.HardCut[i] <-  sum(colSums((replicateSim >= 25)) >= 5) - ncore
+    
+    # Prop reads
+    tmp.err.PropRead[i] <- sum(cumsum(sort(colSums(replicateSim)/sum(rowSums(replicateSim))))>=0.25)  - ncore
+    
+    # Prop Reps
+    tmp.err.PropReps[i] <- sum(colSums(replicateSim)>10*nrow(replicateSim))  - ncore
+    
+    # Thanks Alex
+    tmp.err.PropReadReps[i] <- sum((colSums(replicateSim>0) >= (0.5 * nsites)) & (colSums(replicateSim) >= sum(replicateSim) * 1/1000) )  - ncore
+  }
+  
+  # fill the dataframe from the chunk above with these values for later plotting
+  sim.df$meanerrorHardCut[trt] <- mean(tmp.err.HardCut)
+  sim.df$meanerrorPropRead[trt] <- mean(tmp.err.PropRead)
+  sim.df$meanerrorPropReps[trt] <- mean(tmp.err.PropReps)
+  sim.df$meanerrorPropReadReps[trt] <- mean(tmp.err.PropReadReps)
+  
+}
+```
+
+```{r}
+myPalette <- c("#800000", "#ffffff", "#C2D1E8", "#678BC6", "#0b45a3")
+myPalette2 <- c("#C2D1E8", "#678BC6", "#0b45a3")
+myPalette3 <- c("#678BC6", "#0b45a3")
+```
+
+```{r}
+sim.df_gg <- sim.df %>%
+  gather(method, prob, c(5:8)) %>%
+  mutate(method = factor(method, levels = c("meanerrorHardCut",
+                                            "meanerrorPropRead",
+                                            "meanerrorPropReps", "meanerrorPropReadReps"), labels = c("Hard Cutoff", "Proportion of Sequence Reads", "Proportion of Replicates", "Proportion of Sequence Reads and Replicates")))
+
+
+sim.df_gg$method <- factor(sim.df_gg$method, 
+                            levels = c("Proportion of Sequence Reads", 
+                                       "Proportion of Replicates", 
+                                       "Proportion of Sequence Reads and Replicates", 
+                                       "Hard Cutoff"))
+
+sim.df_gg$font <- ifelse(sim.df_gg$prob > 800, "white", "black")
+
+myPalette <- c("#0b45a3", "#678BC6",  "#C2D1E8", "#ffffff")
+
+fig1 <- ggplot(sim.df_gg, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
+  geom_tile(aes(fill = abs(prob)), colour = "white") +
+  facet_wrap(.~method, nrow = 2) +
+  theme(legend.text=element_text(size=2)) +
+  theme_minimal() +
+  scale_fill_gradientn(colours = myPalette, values = scales::rescale(c(0, 20, 300, 600, 900))) +
+  geom_text(aes(label = round(sim.df_gg$prob, digits = 1))) +
+   labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
+       y = expression(paste(theta)),
+       fill = "Mean Error") +
+   theme(text = element_text(size = 10)) +
+  theme(strip.text.x = element_text(size = 15))
+
+ggsave("Fig1.pdf", fig1, width = 12, height = 12)
+```
