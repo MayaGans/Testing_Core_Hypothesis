@@ -8,6 +8,8 @@ require(gridExtra)
 require(mctoolsr)
 require(parallelDist)
 require(dendextend)
+require(hexbin)
+require(qpcR)
 
 # import OTU tables: OTUs as rows, sample replicates as columns
 human <- readRDS("human.RDS")
@@ -62,8 +64,16 @@ OTU_M_V_CV.2$OTU=NULL
 # In this example we assign core membership when the taxa's abundance is atleast 10 fold 
 # the number of sites. This method accounts for abundance as a function of sites. 
 
-abund <-rowSums(otu)
-focaltaxa<-rownames(otu)[abund>10*ncol(otu)]
+#taxa rows and sites columns
+focaltaxa<-otu
+focaltaxa$numofsites <- apply(focaltaxa, 1, function(x) sum(x>0))
+focaltaxa<-as.data.frame(subset(focaltaxa, focaltaxa$numofsites >=N*0.5))
+focaltaxa<-as.character(rownames(focaltaxa))
+
+
+
+prop$numofsites <- apply(prop, 1, function(x) sum(x>0))
+prop<-as.data.frame(subset(prop, prop$numofsites >=N*0.5))
 
 # Hard cut offs
 
@@ -205,8 +215,11 @@ OTU_M_V_CV.2<-OTU_M_V_CV
 OTU_M_V_CV.2$OTU=NULL
 
 # Proportion of replicates method
-abund <-rowSums(otu)
-focaltaxa<-rownames(otu)[abund>10*ncol(otu)]
+#taxa rows and sites columns
+focaltaxa<-otu
+focaltaxa$numofsites <- apply(focaltaxa, 1, function(x) sum(x>0))
+focaltaxa<-as.data.frame(subset(focaltaxa, focaltaxa$numofsites >=N*0.5))
+focaltaxa<-as.character(rownames(focaltaxa))
 
 # Hard cut offs
 M5_25<- otu
@@ -254,6 +267,24 @@ combined_data1$M5_25<- values[match(combined_data1$M5_25, index)]
 combined_data1$sortedtop_75_percent<- values[match(combined_data1$sortedtop_75_percent, index)]
 
 MergedOTU_Stats_arab <- na.omit(left_join(combined_data1, OTU_M_V_CV))
+#focal taxa  Proportion of Replicates
+table(MergedOTU_Stats_arab[,2])
+#prop Proportion of Sequence Reads and Replicates
+table(MergedOTU_Stats_arab[,3])
+#sorted top 75 prop reads Proportion of Sequence Reads
+table(MergedOTU_Stats_arab[,4])
+# m5_25 Hard Cutoff
+table(MergedOTU_Stats_arab[,5])
+
+
+#focal taxa  Proportion of Replicates
+table(MergedOTU_Stats_human[,2])
+#prop Proportion of Sequence Reads and Replicates
+table(MergedOTU_Stats_human[,3])
+#sorted top 75 prop reads Proportion of Sequence Reads
+table(MergedOTU_Stats_human[,4])
+# m5_25 Hard Cutoff
+table(MergedOTU_Stats_human[,5])
 
 ################
 # Plot

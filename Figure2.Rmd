@@ -7,7 +7,7 @@ output:
 ---
 
 ## University of Wyoming
-## 4 June 2019
+## 17 December 2019
 
 We load `MCMCpack` to draw random samples fron a Dirichlet.
 ```{r, warning = FALSE}
@@ -74,6 +74,14 @@ for(trt in 1:(nrow(sim.df))){
     tmp.err.PropReadFP <- numeric(nsims)
     tmp.err.PropRepsFP <- numeric(nsims)
     tmp.err.PropReadRepsFP <- numeric(nsims)
+    tmp.err.HardCutTP_num <-  numeric(nsims)
+    tmp.err.PropReadTP_num <- numeric(nsims)
+    tmp.err.PropRepsTP_num <- numeric(nsims)
+    tmp.err.PropReadRepsTP_num <- numeric(nsims)
+    tmp.err.HardCutFP_num <-  numeric(nsims)
+    tmp.err.PropReadFP_num <- numeric(nsims)
+    tmp.err.PropRepsFP_num <- numeric(nsims)
+    tmp.err.PropReadRepsFP_num <- numeric(nsims)
   for(i in 1:nsims){
     # create a single OTU table for all four methods to be compared against
     replicateSim <- round(rdirichlet(nsites, c(rep(sim.df$p.core[trt] * sim.df$theta[trt], ncore), 
@@ -89,13 +97,16 @@ for(trt in 1:(nrow(sim.df))){
 
     # Prop reads
     #tmp.err.PropRead[i] <- sum(cumsum(sort(colSums(replicateSim)/sum(rowSums(replicateSim))))>=0.25)  - ncore
-    tmp.err.PropReadTP[i] <- sum((cumsum(sort(colSums(replicateSim)/sum(rowSums(replicateSim))))>=0.25)[1:ncore])
-    tmp.err.PropReadFP[i] <- sum((cumsum(sort(colSums(replicateSim)/sum(rowSums(replicateSim))))>=0.25)[(ncore+1):ntaxa])  
-    # Prop Reps
+    tmp.err.PropReadTP[i] <- sum((cumsum(sort(colSums(replicateSim)/sum(rowSums(replicateSim)), decreasing = T))<= 0.75)[1:ncore])
+    tmp.err.PropReadFP[i] <- sum((cumsum(sort(colSums(replicateSim)/sum(rowSums(replicateSim)), decreasing = T))<= 0.75)[(ncore+1):ntaxa])  
+   
+     # Prop Reps
     #tmp.err.PropReps[i] <- sum(colSums(replicateSim)>10*nrow(replicateSim))  - ncore
-    tmp.err.PropRepsTP[i] <- sum((colSums(replicateSim)>10*nrow(replicateSim))[1:ncore])  
-    tmp.err.PropRepsFP[i] <- sum((colSums(replicateSim)>10*nrow(replicateSim))[(ncore+1):ntaxa])   
-    # Thanks Alex
+    #Sites in rows, otus in Columns
+    tmp.err.PropRepsTP[i] <- sum((colSums(replicateSim>0) >= (0.5 * nsites))[1:ncore])  
+    tmp.err.PropRepsFP[i] <- sum((colSums(replicateSim>0) >= (0.5 * nsites))[(ncore+1):ntaxa])   
+    
+    # Proportion of reps and reads
     #tmp.err.PropReadReps[i] <- sum((colSums(replicateSim>0) >= (0.5 * nsites)) & (colSums(replicateSim) >= sum(replicateSim) * 1/1000) )  - ncore
     tmp.err.PropReadRepsTP[i] <- sum(((colSums(replicateSim>0) >= (0.5 * nsites)) & (colSums(replicateSim) >= sum(replicateSim) * 1/1000) )[1:ncore]) 
     tmp.err.PropReadRepsFP[i] <- sum(((colSums(replicateSim>0) >= (0.5 * nsites)) & (colSums(replicateSim) >= sum(replicateSim) * 1/1000) )[(ncore+1):ntaxa]) 
@@ -111,6 +122,16 @@ for(trt in 1:(nrow(sim.df))){
   sim.df$meanerrorPropReadFP[trt] <- mean(tmp.err.PropReadFP) / (ntaxa - ncore)
   sim.df$meanerrorPropRepsFP[trt] <- mean(tmp.err.PropRepsFP) / (ntaxa - ncore)
   sim.df$meanerrorPropReadRepsFP[trt] <- mean(tmp.err.PropReadRepsFP) / (ntaxa - ncore)
+  
+  sim.df$meanerrorHardCutTP_num[trt] <- mean(tmp.err.HardCutTP) 
+sim.df$meanerrorPropReadTP_num[trt] <- mean(tmp.err.PropReadTP) 
+  sim.df$meanerrorPropRepsTP_num[trt] <- mean(tmp.err.PropRepsTP) 
+  sim.df$meanerrorPropReadRepsTP_num[trt] <- mean(tmp.err.PropReadRepsTP) 
+  
+  sim.df$meanerrorHardCutFP_num[trt] <- mean(tmp.err.HardCutFP) 
+  sim.df$meanerrorPropReadFP_num[trt] <- mean(tmp.err.PropReadFP) 
+  sim.df$meanerrorPropRepsFP_num[trt] <- mean(tmp.err.PropRepsFP) 
+  sim.df$meanerrorPropReadRepsFP_num[trt] <- mean(tmp.err.PropReadRepsFP)
 }
 ```
 
@@ -129,7 +150,7 @@ ggplot(df, aes(x = as.factor(x), y = y)) +
 # True Positive
 ```{r}
 sim.df_gg <- sim.df %>%
-  select(1:8) %>%
+  dplyr::select(1:8) %>%
   gather(method, prob, c(5:8)) %>%
   mutate(method = factor(method, levels = c("meanerrorHardCutTP",
                                             "meanerrorPropReadTP",  
@@ -146,7 +167,7 @@ ggplot(sim.df_gg, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
    labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
        y = expression(paste(theta)),
        fill = "Mean Error") +
-  theme(strip.text.x = element_text(size = 15))
+  theme(strip.text.x = element_text(size = 15)) + theme(legend.position = "none")
 
 ggsave("figure2.png", width = 9, height  = 8, dpi = 300)
 ```
@@ -154,7 +175,7 @@ ggsave("figure2.png", width = 9, height  = 8, dpi = 300)
 # False Positive
 ```{r}
 sim.df_gg <- sim.df %>%
-  select(1,2,3,4,9,10,11,12) %>%
+  dplyr::select(1,2,3,4,9,10,11,12) %>%
   gather(method, prob, c(5:8)) %>%
   mutate(method = factor(method, levels = c("meanerrorHardCutFP",
                                             "meanerrorPropReadFP",  
@@ -171,20 +192,20 @@ ggplot(sim.df_gg, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
    labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
        y = expression(paste(theta)),
        fill = "Mean Error") +
-  theme(strip.text.x = element_text(size = 15))
+  theme(strip.text.x = element_text(size = 15)) + theme(legend.position = "none")
 
 ggsave("figure3.png", width = 9, height  = 8, dpi = 300)
 ```
 
 
 # TP - FP
-```{r}
+```{#r}
 sim.df_gg <- sim.df %>%
   mutate(HardCutoff = (sim.df$meanerrorHardCutTP - sim.df$meanerrorHardCutFP),
          PropReads = (sim.df$meanerrorPropReadTP - sim.df$meanerrorPropReadFP),
          PropReps = (sim.df$meanerrorPropRepsTP - sim.df$meanerrorPropRepsFP),
          PropReadReps = (sim.df$meanerrorPropReadRepsTP - sim.df$meanerrorPropReadRepsFP)) %>%
-  select(1,2,3,4,13,14,15,16) %>%
+  dplyr::select(1,2,3,4,13,14,15,16) %>%
   gather(method, prob, c(5:8)) %>%
   mutate(method = factor(method, levels = c("HardCutoff",
                                             "PropReads",  
@@ -201,19 +222,19 @@ ggplot(sim.df_gg, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
    labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
        y = expression(paste(theta)),
        fill = "Mean Error") +
-  theme(strip.text.x = element_text(size = 15))
+  theme(strip.text.x = element_text(size = 15)) + theme(legend.position = "none")
 
 ggsave("figure4.png", width = 9, height  = 8, dpi = 300)
 ```
 
-
+Here we change the TP-FP to an integer not the ratio. With the ratios we were assuming all calls TP vs. FP were equally valuable. With this we just look at the differencea and make no assumiption of the value. 
 ```{r}
 library(tidyverse)
 
-sim.df$meanerrorHardCutTF <- sim.df$meanerrorHardCutTP - sim.df$meanerrorHardCutFP
-sim.df$meanerrorPropReadTF <- sim.df$meanerrorPropReadTP - sim.df$meanerrorPropReadFP
-sim.df$meanerrorPropRepsTF <- sim.df$meanerrorPropRepsTP - sim.df$meanerrorPropRepsFP
-sim.df$meanerrorPropReadRepsTF <- sim.df$meanerrorPropReadRepsTP - sim.df$meanerrorPropReadRepsFP
+sim.df$meanerrorHardCutTF_num <- sim.df$meanerrorHardCutTP_num - sim.df$meanerrorHardCutFP_num
+sim.df$meanerrorPropReadTF_num <- sim.df$meanerrorPropReadTP_num - sim.df$meanerrorPropReadFP_num
+sim.df$meanerrorPropRepsTF_num <- sim.df$meanerrorPropRepsTP_num - sim.df$meanerrorPropRepsFP_num
+sim.df$meanerrorPropReadRepsTF_num <- sim.df$meanerrorPropReadRepsTP_num - sim.df$meanerrorPropReadRepsFP_num
 
 sim.df_all <- sim.df %>%
   gather(method, mean, 5:16) %>%

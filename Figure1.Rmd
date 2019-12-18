@@ -5,7 +5,7 @@ output: html_notebook
 ---
 
 ## University of Wyoming
-## December 3, 2018
+## December 17, 2019
 
 We load `MCMCpack` to draw random samples
 ```{r, warning = FALSE}
@@ -52,7 +52,7 @@ sim.df<-data.frame(expand.grid(corenoncoreratio=corenoncoreratio, theta=theta),
 sim.df
 ```
 
-You have 2/10000 instaed of 1/1000? Am i interpreting that correctly? 
+Simulate taxon abundances and subject to methods.
 ```{r}
 for(trt in 1:(nrow(sim.df))){
     
@@ -73,12 +73,14 @@ for(trt in 1:(nrow(sim.df))){
     tmp.err.HardCut[i] <-  sum(colSums((replicateSim >= 25)) >= 5) - ncore
     
     # Prop reads
-    tmp.err.PropRead[i] <- sum(cumsum(sort(colSums(replicateSim)/sum(rowSums(replicateSim))))>=0.25)  - ncore
+    #tmp.err.PropRead[i] <- sum(cumsum(sort(colSums(replicateSim)/sum(rowSums(replicateSim))))>=0.25)  - ncore
+    tmp.err.PropRead[i] <-  sum((cumsum(sort(colSums(replicateSim)/sum(rowSums(replicateSim)), decreasing = T)) <= 0.75))  -  ncore
     
     # Prop Reps
-    tmp.err.PropReps[i] <- sum(colSums(replicateSim)>10*nrow(replicateSim))  - ncore
+    #tmp.err.PropReps[i] <- sum(colSums(replicateSim)>10*nrow(replicateSim))  - ncore
+    tmp.err.PropReps[i] <- sum(colSums(replicateSim>0) >= (0.5*nsites)) - ncore
     
-    # Thanks Alex
+    # Prop Reads and Reps
     tmp.err.PropReadReps[i] <- sum((colSums(replicateSim>0) >= (0.5 * nsites)) & (colSums(replicateSim) >= sum(replicateSim) * 1/1000) )  - ncore
   }
   
