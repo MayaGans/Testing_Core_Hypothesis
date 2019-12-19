@@ -131,10 +131,10 @@ Core_community_Ids<-unique(unlist(combined_data[,]))
 Core_community_Ids<-as.character(Core_community_Ids)
 
 combined_data1<- data.frame(OTU = Core_community_Ids, 
-focaltaxa = Core_community_Ids %in% combined_data2$focaltaxa, 
-prop = Core_community_Ids %in% combined_data2$prop,  
-sortedtop_75_percent = Core_community_Ids %in% combined_data2$sortedtop_75_percent, 
-M5_25 = Core_community_Ids %in% combined_data2$M5_25)
+                            focaltaxa = Core_community_Ids %in% combined_data2$focaltaxa, 
+                            prop = Core_community_Ids %in% combined_data2$prop,  
+                            sortedtop_75_percent = Core_community_Ids %in% combined_data2$sortedtop_75_percent, 
+                            M5_25 = Core_community_Ids %in% combined_data2$M5_25)
 
 
 #convert true false into 1 and 0
@@ -165,10 +165,10 @@ test <- MergedOTU_Stats_human %>%
 
 
 test$method <- factor(test$method, 
-                           levels = c("Proportion of Sequence Reads", 
-                                      "Proportion of Replicates", 
-                                      "Proportion of Sequence Reads and Replicates", 
-                                      "Hard Cutoff"))
+                      levels = c("Proportion of Sequence Reads", 
+                                 "Proportion of Replicates", 
+                                 "Proportion of Sequence Reads and Replicates", 
+                                 "Hard Cutoff"))
 
 
 p1 <- ggplot(test, aes(x = log(Mean), y = CV, colour = TF)) +
@@ -320,5 +320,5 @@ p2 <- ggplot(test, aes(x = log(Mean), y = CV, colour = TF)) +
 
 
 # g <- gridExtra::arrangeGrob(p1, p2, nrow = 2)
-g <- cowplot::plot_grid(p1, p2, labels=c("A", "B"), ncol = 1, nrow = 2, label_size = 20)
+g <- cowplot::plot_grid(p1, p2, labels=c("a)", "b)"), ncol = 1, nrow = 2, label_size = 20)
 ggsave("Figure3.pdf", g, width = 25, height = 12)

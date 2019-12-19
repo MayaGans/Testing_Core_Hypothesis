@@ -126,9 +126,9 @@ for(trt in 1:(nrow(sim.df))){
   sim.df$PropReps_TP[trt] <- mean(tmp.err.PropRepsTP) / ncore
   sim.df$PropReadReps_TP[trt] <- mean(tmp.err.PropReadRepsTP) / ncore
   
-  sim.df$meanerrorHardCut_FP[trt] <- mean(tmp.err.HardCutFP) / (ntaxa - ncore)
-  sim.df$meanerrorPropRead_FP[trt] <- mean(tmp.err.PropReadFP) / (ntaxa - ncore)
-  sim.df$meanerrorPropReps_FP[trt] <- mean(tmp.err.PropRepsFP) / (ntaxa - ncore)
+  sim.df$HardCut_FP[trt] <- mean(tmp.err.HardCutFP) / (ntaxa - ncore)
+  sim.df$PropRead_FP[trt] <- mean(tmp.err.PropReadFP) / (ntaxa - ncore)
+  sim.df$PropReps_FP[trt] <- mean(tmp.err.PropRepsFP) / (ntaxa - ncore)
   sim.df$PropReadReps_FP[trt] <- mean(tmp.err.PropReadRepsFP) / (ntaxa - ncore)
   
   sim.df$HardCut_TP_num[trt] <- mean(tmp.err.HardCutTP) 
@@ -136,9 +136,9 @@ sim.df$PropRead_TP_num[trt] <- mean(tmp.err.PropReadTP)
   sim.df$PropReps_TP_num[trt] <- mean(tmp.err.PropRepsTP) 
   sim.df$PropReadReps_TP_num[trt] <- mean(tmp.err.PropReadRepsTP) 
   
-  sim.df$meanerrorHardCut_FP_num[trt] <- mean(tmp.err.HardCutFP) 
-  sim.df$meanerrorPropRead_FP_num[trt] <- mean(tmp.err.PropReadFP) 
-  sim.df$meanerrorPropReps_FP_num[trt] <- mean(tmp.err.PropRepsFP) 
+  sim.df$HardCut_FP_num[trt] <- mean(tmp.err.HardCutFP) 
+  sim.df$PropRead_FP_num[trt] <- mean(tmp.err.PropReadFP) 
+  sim.df$PropReps_FP_num[trt] <- mean(tmp.err.PropRepsFP) 
   sim.df$PropReadReps_FP_num[trt] <- mean(tmp.err.PropReadRepsFP)
 }
 ```
@@ -160,9 +160,9 @@ Here we change the TP-FP to an integer not the ratio. With the ratios we were as
 ```{r}
 library(tidyverse)
 
-sim.df$HardCut_ratio <- sim.df$HardCut_TP_num - sim.df$meanerrorHardCut_FP_num
-sim.df$PropRead_ratio <- sim.df$PropRead_TP_num - sim.df$meanerrorPropRead_FP_num
-sim.df$PropReps_ratio <- sim.df$PropReps_TP_num - sim.df$meanerrorPropReps_FP_num
+sim.df$HardCut_ratio <- sim.df$HardCut_TP_num - sim.df$HardCut_FP_num
+sim.df$PropRead_ratio <- sim.df$PropRead_TP_num - sim.df$PropRead_FP_num
+sim.df$PropReps_ratio <- sim.df$PropReps_TP_num - sim.df$PropReps_FP_num
 sim.df$PropReadReps_ratio <- sim.df$PropReadReps_TP_num - sim.df$PropReadReps_FP_num
 ```
 
@@ -170,7 +170,7 @@ sim.df$PropReadReps_ratio <- sim.df$PropReadReps_TP_num - sim.df$PropReadReps_FP
 ```{r}
 sim.df_all <- sim.df %>%
 # new column a name, new column b name, what do we want the values of
-  gather(method, mean, c(5:8, 9:12, 27:30)) %>%
+  gather(method, mean, c(5:8, 9:12, 21:24)) %>%
   separate(method, into = c('method', 'error'), sep = "_")
   #gather(method, mean, c(5:16,21:24)) %>%
   #gather(method, mean2, 21:24) %>%
@@ -237,7 +237,7 @@ tp_plot <- ggplot(tp, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))
     theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) +
-    theme(text = element_text(size = 20))
+    theme(text = element_text(size = 20)) + guides(fill=guide_legend(title="Proportion of\nTrue Positives"))
 ```
 
 ```{r}
@@ -258,7 +258,7 @@ fp_plot <- ggplot(fp, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))
     theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) +
-    theme(text = element_text(size = 20))
+    theme(text = element_text(size = 20)) + guides(fill=guide_legend(title="Proportion of\nFalse Positives"))
 ```
 
 
@@ -279,11 +279,11 @@ tf_plot <- ggplot(tf, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))
        y = expression(paste(theta)),
        fill = "Mean Error") +
   theme(strip.text.x = element_text(size = 0)) +
-  theme(text = element_text(size = 20))
+  theme(text = element_text(size = 20)) + guides(fill=guide_legend(title="TP-FP"))
 ```
 
 ```{r}
-g <- cowplot::plot_grid(tp_plot, fp_plot, tf_plot, labels=c("A", "B", "C"), 
+g <- cowplot::plot_grid(tp_plot, fp_plot, tf_plot, labels=c("a)", "b)", "c)"), 
                         ncol = 1, nrow = 3, label_size = 30)
-ggsave(file="/Users/mayagans/Desktop/Fig2.pdf", g, width = 25, height = 15) #saves g
+ggsave(file="Fig2.pdf", g, width = 25, height = 15) #saves g
 ```
