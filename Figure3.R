@@ -10,8 +10,8 @@ require(qpcR)
 require(cowplot)
 
 # import OTU tables: OTUs as rows, sample replicates as columns
-human <- readRDS("/Users/mayagans/Desktop/Core_Hypothesis/human.RDS")
-arabadopsis <- readRDS("/Users/mayagans/Desktop/Core_Hypothesis/arabadopsis.RDS")
+human <- readRDS("human.RDS")
+arabadopsis <- readRDS("arabadopsis.RDS")
 
 # by reassigning the imported dataset to the variable OTU
 # all code below can be easily executed
