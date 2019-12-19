@@ -154,7 +154,6 @@ ggplot(df, aes(x = as.factor(x), y = y)) +
   geom_bar(stat = "identity", aes(fill = as.factor(x))) +
   scale_fill_manual(values = myPalette)
 ```
-
 # True Positive
 ```{#r}
 sim.df_gg <- sim.df %>%
@@ -277,21 +276,13 @@ sim.df$meanerrorPropReadTF_FP_num
 sim.df$meanerrorPropRepsTF_FP_num
 ...
 sim.df$meanerrorPropReadRepsTF_FP_num
+
 ```{r}
 sim.df_all <- sim.df %>%
   # new column a name, new column b name, what do we want the values of
-  # is 5:16 even correct?
   gather(method, mean, 5:16) %>%
+  #gather(method, mean2, 21:24) %>%
   # clean up the first column names to not have their underscore suffixes
-  # remove text after the _ and the two letters before it
-  # then create a new column called error and use that value to fill it:
-  
-  # meanerrorPropRepsFP_num
-  # becomes 
-  # method              error
-  # meanerrorPropReps   FP
-  
-  # that way we can facet by the method and error!
   separate(method, into = c('method', 'error'), sep = -2, convert = TRUE) 
 
 sim.df_all$method <- as.factor(sim.df_all$method)
@@ -301,18 +292,18 @@ sim.df_all <- sim.df_all %>%
   # I'm refactoring the levels to have pretty names but
   # if you run 
   # unique(sim.df_all$method)
-  # there's 8 levels?? Shouldn't we only have 4??)
-    mutate(method = factor(method, levels = c("meanerrorHardCut",
-                                            "meanerrorPropRead",  
-                                          "meanerrorPropReadReps",
-                                          "meanerrorPropReps"), labels = c("Hard Cutoff", "Proportion of Sequence Reads", "Proportion of Sequence Reads and Replicates", "Proportion of Replicates")))
+  # there's 8 levels?? Shouldn't we only have 4??) ##yes, I relabeled the extra columns.
+    mutate(method = factor(method, levels = c("meanerrorHardCut", "meanerrorHardCutFP_n",
+                                            "meanerrorPropRead",  "meanerrorPropReadFP_n",
+                                          "meanerrorPropReadReps","meanerrorPropRepsFP_n",
+                                          "meanerrorPropReps", "meanerrorPropReadRepsFP_n"), labels = c("Hard Cutoff","Hard Cutoff", "Proportion of Sequence Reads", "Proportion of Sequence Reads","Proportion of Sequence Reads and Replicates","Proportion of Sequence Reads and Replicates", "Proportion of Replicates","Proportion of Replicates" )))
 
 # I had the code so that we can split on the underscore, then create this error column for if the values are
 # FP, TF, of TP but I don't think this works given the new names in the column?
 sim.df_all <- sim.df_all %>%
-    mutate(error = factor(error, levels = c("FP", "TF", "TP"), labels = c("False Positive", "TP-FP", "True Positive")))
+    mutate(error = factor(error, levels = c("FP", "um", "TP"), labels = c("False Positive", "TP-FP", "True Positive")))
 
-# By factoring the methods we can plot them in the order we want rather than alphabetically
+# By factoring the methods (ordered factor) we can plot them in the order we want rather than alphabetically
 sim.df_all$method <- factor(sim.df_all$method, 
                             levels = c("Proportion of Sequence Reads", 
                                        "Proportion of Replicates", 
