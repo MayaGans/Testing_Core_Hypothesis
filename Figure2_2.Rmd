@@ -145,7 +145,7 @@ sim.df$PropRead_TP_num[trt] <- mean(tmp.err.PropReadTP)
 
 
 ```{r}
-myPalette <- c("#800000", "#ffffff", "#C2D1E8", "#678BC6", "#0b45a3")
+myPalette <- c("#800000", "#A04040", "#DFBFBF", "#ffffff", "#0b45a3")
 myPalette2 <- c("#ffffff", "#C2D1E8", "#678BC6", "#0b45a3")
 myPalette3 <- c("#ffffff", "#C2D1E8")
 
@@ -154,86 +154,6 @@ df <- data.frame(x = c(1,2,3,4,5), y = c(1,2,3,4,5))
 ggplot(df, aes(x = as.factor(x), y = y)) +
   geom_bar(stat = "identity", aes(fill = as.factor(x))) +
   scale_fill_manual(values = myPalette)
-```
-# True Positive
-```{#r}
-sim.df_gg <- sim.df %>%
-  dplyr::select(1:8) %>%
-  gather(method, prob, c(5:8)) %>%
-  mutate(method = factor(method, levels = c("HardCut_TP",
-                                            "PropRead_TP",  
-                                            "PropReps_TP",
-                                          "PropReadsReps_TP"), labels = c("Hard Cutoff", "Proportion of Reads", "Proportion of Replicates", "Proportion of Reads and Replicates")))
-
-ggplot(sim.df_gg, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
-  geom_tile(aes(fill = prob), colour = "white") +
-  facet_wrap(.~method, nrow = 2) +
-  theme(legend.text=element_text(size=2)) +
-  theme_minimal() +
-  scale_fill_gradientn(colours = myPalette2, values = scales::rescale(c(-1000, -500, -25,0, 100, 500, 1000))) +
-  geom_text(aes(label = round(sim.df_gg$prob, digits = 2))) +
-   labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
-       y = expression(paste(theta)),
-       fill = "Mean Error") +
-  theme(strip.text.x = element_text(size = 15)) + theme(legend.position = "none")
-
-ggsave("figure2.png", width = 9, height  = 8, dpi = 300)
-```
-
-# False Positive
-```{#r}
-sim.df_gg <- sim.df %>%
-  dplyr::select(1,2,3,4,9,10,11,12) %>%
-  gather(method, prob, c(5:8)) %>%
-  mutate(method = factor(method, levels = c("meanerrorHardCutFP",
-                                            "meanerrorPropReadFP",  
-                                            "meanerrorPropRepsFP",
-                                          "PropReadReps_FP"), labels = c("Hard Cutoff", "Proportion of Reads", "Proportion of Replicates", "Proportion of Reads and Replicates")))
-
-ggplot(sim.df_gg, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
-  geom_tile(aes(fill = prob), colour = "white") +
-  facet_wrap(.~method, nrow = 2) +
-  theme(legend.text=element_text(size=2)) +
-  theme_minimal() +
-  scale_fill_gradientn(colours = myPalette2, values = scales::rescale(c(-1000, -500, -25,0, 100, 500, 1000))) +
-  geom_text(aes(label = round(sim.df_gg$prob, digits = 2))) +
-   labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
-       y = expression(paste(theta)),
-       fill = "Mean Error") +
-  theme(strip.text.x = element_text(size = 15)) + theme(legend.position = "none")
-
-ggsave("figure3.png", width = 9, height  = 8, dpi = 300)
-```
-
-
-# TP - FP
-```{#r}
-sim.df_gg <- sim.df %>%
-  mutate(HardCutoff = (sim.df$HardCut_TP_num - sim.df$meanerrorHardCutFP_num),
-         PropReads = (sim.df$PropRead_TP_num - sim.df$meanerrorPropReadFP_num),
-         PropReps = (sim.df$PropReps_TP_num - sim.df$meanerrorPropRepsFP_num),
-         PropReadReps = (sim.df$PropReadsReps_TP_num - sim.df$PropReadReps_FP_num)) %>%
-  
-  dplyr::select(1,2,3,4,21:24) %>%
-  gather(method, prob, c(5:8)) %>%
-  mutate(method = factor(method, levels = c("HardCutoff",
-                                            "PropReads",  
-                                            "PropReps",
-                                          "PropReadReps"), labels = c("Hard Cutoff", "Proportion of Reads", "Proportion of Replicates", "Proportion of Reads and Replicates")))
-
-ggplot(sim.df_gg, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
-  geom_tile(aes(fill = prob), colour = "white") +
-  facet_wrap(.~method, nrow = 1) +
-  theme(legend.text=element_text(size=2)) +
-  theme_minimal() +
-  scale_fill_gradientn(colours = myPalette, values = scales::rescale(c(-0.5, 0, .5, .75, 1))) +
-  geom_text(aes(label = round(sim.df_gg$prob, digits = 2))) +
-   labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
-       y = expression(paste(theta)),
-       fill = "Mean Error") +
-  theme(strip.text.x = element_text(size = 15)) + theme(legend.position = "none")
-
-ggsave("figure4.png", width = 9, height  = 8, dpi = 300)
 ```
 
 Here we change the TP-FP to an integer not the ratio. With the ratios we were assuming all calls TP vs. FP were equally valuable. With this we just look at the differencea and make no assumiption of the value. 
@@ -262,21 +182,6 @@ sim.df$PropReadReps_ratio <- sim.df$PropReadReps_TP_num - sim.df$PropReadReps_FP
 #sim.df$PropReadsReps_TP <- sim.df$PropReadsReps_TP
 ```
 
-In order to facet the plots, we need to group the four columns that contain the values we care about, and create a label column:
-method                                value
-sim.df$meanerrorHardCutTF_FP_num      0
-sim.df$meanerrorHardCutTF_FP_num      0
-sim.df$meanerrorHardCutTF_FP_num      etc.
-sim.df$meanerrorHardCutTF_FP_num 
-sim.df$meanerrorHardCutTF_FP_num 
-....
-sim.df$meanerrorPropReadTF_FP_num
-sim.df$meanerrorPropReadTF_FP_num
-sim.df$meanerrorPropReadTF_FP_num
-...
-sim.df$meanerrorPropRepsTF_FP_num
-...
-sim.df$meanerrorPropReadRepsTF_FP_num
 
 ```{r}
 sim.df_all <- sim.df %>%
@@ -377,13 +282,14 @@ fp_plot <- ggplot(fp, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))
 tf <- sim.df_all %>%
   filter(sim.df_all$error == "TP-FP")
 
+breaks <- c(-900, -400, 0, 25)
 
 tf_plot <- ggplot(tf, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
   geom_tile(aes(fill = mean), colour = "white") +
   facet_grid(error~method) +
   theme(legend.text=element_text(size=2)) +
   theme_minimal() +
-  scale_fill_gradientn(colours = myPalette, values = scales::rescale(c(-0.5, 0, .5, .75, 1))) +
+  scale_fill_gradientn(colours = myPalette, breaks = breaks) +
   geom_text(aes(label = round(tf$mean, digits = 2))) +
    labs(x = expression(paste("(", pi, " core / ", pi, " non-core)")),
        y = expression(paste(theta)),
@@ -393,9 +299,7 @@ tf_plot <- ggplot(tf, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))
 ```
 
 ```{r}
-
-gridExtra::grid.arrange(tp_plot, fp_plot, tf_plot, nrow = 3)
-
-g <- gridExtra::arrangeGrob(tp_plot, fp_plot, tf_plot, nrow=3) #generates g
-ggsave(file="Fig2.pdf", g, width = 25, height = 15) #saves g
+g <- cowplot::plot_grid(tp_plot, fp_plot, tf_plot, labels=c("A", "B", "C"), 
+                        ncol = 1, nrow = 3, label_size = 30)
+ggsave(file="/Users/mayagans/Desktop/Fig2.pdf", g, width = 25, height = 15) #saves g
 ```
