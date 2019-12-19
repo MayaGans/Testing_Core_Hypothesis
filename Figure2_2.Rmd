@@ -156,7 +156,7 @@ ggplot(df, aes(x = as.factor(x), y = y)) +
 ```
 
 # True Positive
-```{r}
+```{#r}
 sim.df_gg <- sim.df %>%
   dplyr::select(1:8) %>%
   gather(method, prob, c(5:8)) %>%
@@ -181,7 +181,7 @@ ggsave("figure2.png", width = 9, height  = 8, dpi = 300)
 ```
 
 # False Positive
-```{r}
+```{#r}
 sim.df_gg <- sim.df %>%
   dplyr::select(1,2,3,4,9,10,11,12) %>%
   gather(method, prob, c(5:8)) %>%
@@ -207,7 +207,7 @@ ggsave("figure3.png", width = 9, height  = 8, dpi = 300)
 
 
 # TP - FP
-```{r}
+```{#r}
 sim.df_gg <- sim.df %>%
   mutate(HardCutoff = (sim.df$meanerrorHardCutTP_num - sim.df$meanerrorHardCutFP_num),
          PropReads = (sim.df$meanerrorPropReadTP_num - sim.df$meanerrorPropReadFP_num),
@@ -260,23 +260,49 @@ sim.df$meanerrorPropReadRepsTF_FP_num <- sim.df$meanerrorPropReadRepsTP_num - si
 #sim.df$meanerrorPropReadTP <- sim.df$meanerrorPropReadTP 
 #sim.df$meanerrorPropRepsTP <- sim.df$meanerrorPropRepsTP 
 #sim.df$meanerrorPropReadRepsTP <- sim.df$meanerrorPropReadRepsTP
+```
 
+In order to facet the plots, we need to group the four columns that contain the values we care about, and create a label column:
+method                                value
+sim.df$meanerrorHardCutTF_FP_num      0
+sim.df$meanerrorHardCutTF_FP_num      0
+sim.df$meanerrorHardCutTF_FP_num      etc.
+sim.df$meanerrorHardCutTF_FP_num 
+sim.df$meanerrorHardCutTF_FP_num 
+....
+sim.df$meanerrorPropReadTF_FP_num
+sim.df$meanerrorPropReadTF_FP_num
+sim.df$meanerrorPropReadTF_FP_num
+...
+sim.df$meanerrorPropRepsTF_FP_num
+...
+sim.df$meanerrorPropReadRepsTF_FP_num
+```{r}
 sim.df_all <- sim.df %>%
+  # new column a name, new column b name, what do we want the values of
   gather(method, mean, 5:16) %>%
+  # clean up the first column names to not have their underscore suffixes
   separate(method, into = c('method', 'error'), sep = -2, convert = TRUE) 
 
 sim.df_all$method <- as.factor(sim.df_all$method)
 sim.df_all$error <- as.factor(sim.df_all$error)
 
 sim.df_all <- sim.df_all %>%
+  # I'm refactoring the levels to have pretty names but
+  # if you run 
+  # unique(sim.df_all$method)
+  # there's 8 levels?? Shouldn't we only have 4??)
     mutate(method = factor(method, levels = c("meanerrorHardCut",
                                             "meanerrorPropRead",  
                                           "meanerrorPropReadReps",
                                           "meanerrorPropReps"), labels = c("Hard Cutoff", "Proportion of Sequence Reads", "Proportion of Sequence Reads and Replicates", "Proportion of Replicates")))
 
+# I had the code so that we can split on the underscore, then create this error column for if the values are
+# FP, TF, of TP but I don't think this works given the new names in the column?
 sim.df_all <- sim.df_all %>%
     mutate(error = factor(error, levels = c("FP", "TF", "TP"), labels = c("False Positive", "TP-FP", "True Positive")))
 
+# By factoring the methods we can plot them in the order we want rather than alphabetically
 sim.df_all$method <- factor(sim.df_all$method, 
                             levels = c("Proportion of Sequence Reads", 
                                        "Proportion of Replicates", 
@@ -296,6 +322,7 @@ ggplot(sim.df_all, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
   theme(strip.text.x = element_text(size = 15))
 ```
 
+For these plots I just filter the three error values to create each, then facet them together, but this isn't working because of the way the columns were broken up on line 285
 ```{r}
 tp <- sim.df_all %>%
   filter(sim.df_all$error == "True Positive")
