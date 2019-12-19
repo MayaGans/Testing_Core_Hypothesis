@@ -280,6 +280,7 @@ sim.df$meanerrorPropReadRepsTF_FP_num
 ```{r}
 sim.df_all <- sim.df %>%
   # new column a name, new column b name, what do we want the values of
+  # is 5:16 even correct?
   gather(method, mean, 5:16) %>%
   # clean up the first column names to not have their underscore suffixes
   # remove text after the _ and the two letters before it
