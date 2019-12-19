@@ -333,8 +333,8 @@ tf_plot <- ggplot(tf, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))
 
 ```{r}
 
-gridExtra::grid.arrange(tp_plot, fp_plot, tf_plot, nrow = 3)
+gridExtra::grid.arrange(tp_plot, fp_plot, nrow = 2)
 
-g <- gridExtra::arrangeGrob(tp_plot, fp_plot, tf_plot, nrow=3) #generates g
+g <- gridExtra::arrangeGrob(tp_plot, fp_plot, nrow=2) #generates g
 ggsave(file="Fig2.pdf", g, width = 25, height = 15) #saves g
 ```

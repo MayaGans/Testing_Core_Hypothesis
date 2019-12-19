@@ -1,5 +1,3 @@
-require(VennDiagram)
-require(limma)
 require(gplots)
 require(tidyverse)
 require(matrixStats)
@@ -7,13 +5,13 @@ require(factoextra)
 require(gridExtra)
 require(mctoolsr)
 require(parallelDist)
-require(dendextend)
 require(hexbin)
 require(qpcR)
+require(cowplot)
 
 # import OTU tables: OTUs as rows, sample replicates as columns
-human <- readRDS("human.RDS")
-arabadopsis <- readRDS("arabadopsis.RDS")
+human <- readRDS("/Users/mayagans/Desktop/Core_Hypothesis/human.RDS")
+arabadopsis <- readRDS("/Users/mayagans/Desktop/Core_Hypothesis/arabadopsis.RDS")
 
 # by reassigning the imported dataset to the variable OTU
 # all code below can be easily executed
@@ -321,6 +319,6 @@ p2 <- ggplot(test, aes(x = log(Mean), y = CV, colour = TF)) +
   theme(strip.text = element_text(color="white"))
 
 
-g <- gridExtra::arrangeGrob(p1, p2, nrow = 2)
-ggsave("Figure3.pdf", g, width = 25, height = 12)
-
+# g <- gridExtra::arrangeGrob(p1, p2, nrow = 2)
+g <- cowplot::plot_grid(p1, p2, labels=c("A", "B"), ncol = 1, nrow = 2)
+ggsave("/Users/mayagans/Desktop/Core_Hypothesis/Figure3.pdf", g, width = 25, height = 12)
