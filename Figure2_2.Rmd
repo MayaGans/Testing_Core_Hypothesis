@@ -282,6 +282,15 @@ sim.df_all <- sim.df %>%
   # new column a name, new column b name, what do we want the values of
   gather(method, mean, 5:16) %>%
   # clean up the first column names to not have their underscore suffixes
+  # remove text after the _ and the two letters before it
+  # then create a new column called error and use that value to fill it:
+  
+  # meanerrorPropRepsFP_num
+  # becomes 
+  # method              error
+  # meanerrorPropReps   FP
+  
+  # that way we can facet by the method and error!
   separate(method, into = c('method', 'error'), sep = -2, convert = TRUE) 
 
 sim.df_all$method <- as.factor(sim.df_all$method)
