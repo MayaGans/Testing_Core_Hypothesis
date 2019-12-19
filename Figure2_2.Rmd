@@ -164,22 +164,6 @@ sim.df$HardCut_ratio <- sim.df$HardCut_TP_num - sim.df$meanerrorHardCut_FP_num
 sim.df$PropRead_ratio <- sim.df$PropRead_TP_num - sim.df$meanerrorPropRead_FP_num
 sim.df$PropReps_ratio <- sim.df$PropReps_TP_num - sim.df$meanerrorPropReps_FP_num
 sim.df$PropReadReps_ratio <- sim.df$PropReadReps_TP_num - sim.df$PropReadReps_FP_num
-
-#(sim.df$HardCut_TP_num - sim.df$meanerrorHardCutFP_num)
-#(sim.df$PropRead_TP_num - sim.df$meanerrorPropReadFP_num)
-#(sim.df$PropReps_TP_num - sim.df$meanerrorPropRepsFP_num)
-#(sim.df$PropReadsReps_TP_num - sim.df$PropReadReps_FP_num)
-
-#sim.df$meanerrorHardCutFP <- sim.df$meanerrorHardCutFP
-#sim.df$meanerrorPropReadFP <- sim.df$meanerrorPropReadFP
-#sim.df$meanerrorPropRepsFP <-  sim.df$meanerrorPropRepsFP
-#sim.df$PropReadReps_FP <-  sim.df$PropReadReps_FP
-
-
-#sim.df$HardCut_TP <- sim.df$HardCut_TP 
-#sim.df$PropRead_TP <- sim.df$PropRead_TP 
-#sim.df$PropReps_TP <- sim.df$PropReps_TP 
-#sim.df$PropReadsReps_TP <- sim.df$PropReadsReps_TP
 ```
 
 
