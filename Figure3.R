@@ -321,4 +321,4 @@ p2 <- ggplot(test, aes(x = log(Mean), y = CV, colour = TF)) +
 
 # g <- gridExtra::arrangeGrob(p1, p2, nrow = 2)
 g <- cowplot::plot_grid(p1, p2, labels=c("A", "B"), ncol = 1, nrow = 2)
-ggsave("/Users/mayagans/Desktop/Core_Hypothesis/Figure3.pdf", g, width = 25, height = 12)
+ggsave("Figure3.pdf", g, width = 25, height = 12)
