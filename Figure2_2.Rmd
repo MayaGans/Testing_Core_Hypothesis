@@ -47,22 +47,22 @@ sim.df<-data.frame(expand.grid(corenoncoreratio=corenoncoreratio, theta=theta),
            p.core=rep(p.core, length(theta)), 
            p.noncore=rep(p.noncore, length(theta)),
 
-           meanerrorHardCutTP= numeric(length(p.core) * length(theta)),
-           meanerrorPropReadTP = numeric(length(p.core) * length(theta)),
-           meanerrorPropRepsTP = numeric(length(p.core) * length(theta)),
-           meanerrorPropReadRepsTP = numeric(length(p.core) * length(theta)),
-          meanerrorHardCutFP= numeric(length(p.core) * length(theta)),
-           meanerrorPropReadFP = numeric(length(p.core) * length(theta)),
-           meanerrorPropRepsFP = numeric(length(p.core) * length(theta)),
-           meanerrorPropReadRepsFP = numeric(length(p.core) * length(theta)),
-          meanerrorHardCutFP_num= numeric(length(p.core) * length(theta)),
-           meanerrorPropReadFP_num = numeric(length(p.core) * length(theta)),
-           meanerrorPropRepsFP_num = numeric(length(p.core) * length(theta)),
-           meanerrorPropReadRepsFP_num = numeric(length(p.core) * length(theta)),
-            meanerrorHardCutTP_num= numeric(length(p.core) * length(theta)),
-           meanerrorPropReadTP_num = numeric(length(p.core) * length(theta)),
-           meanerrorPropRepsTP_num = numeric(length(p.core) * length(theta)),
-           meanerrorPropReadRepsTP_num = numeric(length(p.core) * length(theta))
+          HardCut_TP= numeric(length(p.core) * length(theta)),
+          PropRead_TP = numeric(length(p.core) * length(theta)),
+          PropReps_TP = numeric(length(p.core) * length(theta)),
+          PropReadReps_TP = numeric(length(p.core) * length(theta)),
+          HardCut_FP= numeric(length(p.core) * length(theta)),
+          PropRead_FP = numeric(length(p.core) * length(theta)),
+          PropReps_FP = numeric(length(p.core) * length(theta)),
+          PropReadReps_FP = numeric(length(p.core) * length(theta)),
+          HardCut_FP_num= numeric(length(p.core) * length(theta)),
+          PropRead_FP_num = numeric(length(p.core) * length(theta)),
+          PropReps_FP_num = numeric(length(p.core) * length(theta)),
+          PropReadReps_FP_num = numeric(length(p.core) * length(theta)),
+          HardCut_TP_num= numeric(length(p.core) * length(theta)),
+          PropRead_TP_num = numeric(length(p.core) * length(theta)),
+          PropReps_TP_num = numeric(length(p.core) * length(theta)),
+          PropReadReps_TP_num = numeric(length(p.core) * length(theta))
            )
            #error2.5 = numeric(length(p.core) * length(theta)),
            #error97.5 = numeric(length(p.core) * length(theta)))
@@ -82,14 +82,14 @@ for(trt in 1:(nrow(sim.df))){
     tmp.err.PropReadFP <- numeric(nsims)
     tmp.err.PropRepsFP <- numeric(nsims)
     tmp.err.PropReadRepsFP <- numeric(nsims)
-    tmp.err.HardCutTP_num <-  numeric(nsims)
-    tmp.err.PropReadTP_num <- numeric(nsims)
-    tmp.err.PropRepsTP_num <- numeric(nsims)
-    tmp.err.PropReadRepsTP_num <- numeric(nsims)
-    tmp.err.HardCutFP_num <-  numeric(nsims)
-    tmp.err.PropReadFP_num <- numeric(nsims)
-    tmp.err.PropRepsFP_num <- numeric(nsims)
-    tmp.err.PropReadRepsFP_num <- numeric(nsims)
+    #tmp.err.HardCutTP_num <-  numeric(nsims)
+    #tmp.err.PropReadTP_num <- numeric(nsims)
+    #tmp.err.PropRepsTP_num <- numeric(nsims)
+    #tmp.err.PropReadRepsTP_num <- numeric(nsims)
+    #tmp.err.HardCutFP_num <-  numeric(nsims)
+    #tmp.err.PropReadFP_num <- numeric(nsims)
+    #tmp.err.PropRepsFP_num <- numeric(nsims)
+    #tmp.err.PropReadRepsFP_num <- numeric(nsims)
   for(i in 1:nsims){
     # create a single OTU table for all four methods to be compared against
     replicateSim <- round(rdirichlet(nsites, c(rep(sim.df$p.core[trt] * sim.df$theta[trt], ncore), 
@@ -121,27 +121,28 @@ for(trt in 1:(nrow(sim.df))){
   }
   
   # fill the dataframe from the chunk above with these values for later plotting
-  sim.df$meanerrorHardCutTP[trt] <- mean(tmp.err.HardCutTP) / ncore
-  sim.df$meanerrorPropReadTP[trt] <- mean(tmp.err.PropReadTP) / ncore
-  sim.df$meanerrorPropRepsTP[trt] <- mean(tmp.err.PropRepsTP) / ncore
-  sim.df$meanerrorPropReadRepsTP[trt] <- mean(tmp.err.PropReadRepsTP) / ncore
+  sim.df$HardCut_TP[trt] <- mean(tmp.err.HardCutTP) / ncore
+  sim.df$PropRead_TP[trt] <- mean(tmp.err.PropReadTP) / ncore
+  sim.df$PropReps_TP[trt] <- mean(tmp.err.PropRepsTP) / ncore
+  sim.df$PropReadReps_TP[trt] <- mean(tmp.err.PropReadRepsTP) / ncore
   
-  sim.df$meanerrorHardCutFP[trt] <- mean(tmp.err.HardCutFP) / (ntaxa - ncore)
-  sim.df$meanerrorPropReadFP[trt] <- mean(tmp.err.PropReadFP) / (ntaxa - ncore)
-  sim.df$meanerrorPropRepsFP[trt] <- mean(tmp.err.PropRepsFP) / (ntaxa - ncore)
-  sim.df$meanerrorPropReadRepsFP[trt] <- mean(tmp.err.PropReadRepsFP) / (ntaxa - ncore)
+  sim.df$meanerrorHardCut_FP[trt] <- mean(tmp.err.HardCutFP) / (ntaxa - ncore)
+  sim.df$meanerrorPropRead_FP[trt] <- mean(tmp.err.PropReadFP) / (ntaxa - ncore)
+  sim.df$meanerrorPropReps_FP[trt] <- mean(tmp.err.PropRepsFP) / (ntaxa - ncore)
+  sim.df$PropReadReps_FP[trt] <- mean(tmp.err.PropReadRepsFP) / (ntaxa - ncore)
   
-  sim.df$meanerrorHardCutTP_num[trt] <- mean(tmp.err.HardCutTP) 
-sim.df$meanerrorPropReadTP_num[trt] <- mean(tmp.err.PropReadTP) 
-  sim.df$meanerrorPropRepsTP_num[trt] <- mean(tmp.err.PropRepsTP) 
-  sim.df$meanerrorPropReadRepsTP_num[trt] <- mean(tmp.err.PropReadRepsTP) 
+  sim.df$HardCut_TP_num[trt] <- mean(tmp.err.HardCutTP) 
+sim.df$PropRead_TP_num[trt] <- mean(tmp.err.PropReadTP) 
+  sim.df$PropReps_TP_num[trt] <- mean(tmp.err.PropRepsTP) 
+  sim.df$PropReadReps_TP_num[trt] <- mean(tmp.err.PropReadRepsTP) 
   
-  sim.df$meanerrorHardCutFP_num[trt] <- mean(tmp.err.HardCutFP) 
-  sim.df$meanerrorPropReadFP_num[trt] <- mean(tmp.err.PropReadFP) 
-  sim.df$meanerrorPropRepsFP_num[trt] <- mean(tmp.err.PropRepsFP) 
-  sim.df$meanerrorPropReadRepsFP_num[trt] <- mean(tmp.err.PropReadRepsFP)
+  sim.df$meanerrorHardCut_FP_num[trt] <- mean(tmp.err.HardCutFP) 
+  sim.df$meanerrorPropRead_FP_num[trt] <- mean(tmp.err.PropReadFP) 
+  sim.df$meanerrorPropReps_FP_num[trt] <- mean(tmp.err.PropRepsFP) 
+  sim.df$PropReadReps_FP_num[trt] <- mean(tmp.err.PropReadRepsFP)
 }
 ```
+
 
 ```{r}
 myPalette <- c("#800000", "#ffffff", "#C2D1E8", "#678BC6", "#0b45a3")
@@ -159,10 +160,10 @@ ggplot(df, aes(x = as.factor(x), y = y)) +
 sim.df_gg <- sim.df %>%
   dplyr::select(1:8) %>%
   gather(method, prob, c(5:8)) %>%
-  mutate(method = factor(method, levels = c("meanerrorHardCutTP",
-                                            "meanerrorPropReadTP",  
-                                            "meanerrorPropRepsTP",
-                                          "meanerrorPropReadRepsTP"), labels = c("Hard Cutoff", "Proportion of Reads", "Proportion of Replicates", "Proportion of Reads and Replicates")))
+  mutate(method = factor(method, levels = c("HardCut_TP",
+                                            "PropRead_TP",  
+                                            "PropReps_TP",
+                                          "PropReadsReps_TP"), labels = c("Hard Cutoff", "Proportion of Reads", "Proportion of Replicates", "Proportion of Reads and Replicates")))
 
 ggplot(sim.df_gg, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
   geom_tile(aes(fill = prob), colour = "white") +
@@ -187,7 +188,7 @@ sim.df_gg <- sim.df %>%
   mutate(method = factor(method, levels = c("meanerrorHardCutFP",
                                             "meanerrorPropReadFP",  
                                             "meanerrorPropRepsFP",
-                                          "meanerrorPropReadRepsFP"), labels = c("Hard Cutoff", "Proportion of Reads", "Proportion of Replicates", "Proportion of Reads and Replicates")))
+                                          "PropReadReps_FP"), labels = c("Hard Cutoff", "Proportion of Reads", "Proportion of Replicates", "Proportion of Reads and Replicates")))
 
 ggplot(sim.df_gg, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
   geom_tile(aes(fill = prob), colour = "white") +
@@ -208,10 +209,10 @@ ggsave("figure3.png", width = 9, height  = 8, dpi = 300)
 # TP - FP
 ```{#r}
 sim.df_gg <- sim.df %>%
-  mutate(HardCutoff = (sim.df$meanerrorHardCutTP_num - sim.df$meanerrorHardCutFP_num),
-         PropReads = (sim.df$meanerrorPropReadTP_num - sim.df$meanerrorPropReadFP_num),
-         PropReps = (sim.df$meanerrorPropRepsTP_num - sim.df$meanerrorPropRepsFP_num),
-         PropReadReps = (sim.df$meanerrorPropReadRepsTP_num - sim.df$meanerrorPropReadRepsFP_num)) %>%
+  mutate(HardCutoff = (sim.df$HardCut_TP_num - sim.df$meanerrorHardCutFP_num),
+         PropReads = (sim.df$PropRead_TP_num - sim.df$meanerrorPropReadFP_num),
+         PropReps = (sim.df$PropReps_TP_num - sim.df$meanerrorPropRepsFP_num),
+         PropReadReps = (sim.df$PropReadsReps_TP_num - sim.df$PropReadReps_FP_num)) %>%
   
   dplyr::select(1,2,3,4,21:24) %>%
   gather(method, prob, c(5:8)) %>%
@@ -239,26 +240,26 @@ Here we change the TP-FP to an integer not the ratio. With the ratios we were as
 ```{r}
 library(tidyverse)
 
-sim.df$meanerrorHardCutTF_FP_num <- sim.df$meanerrorHardCutTP_num - sim.df$meanerrorHardCutFP_num
-sim.df$meanerrorPropReadTF_FP_num <- sim.df$meanerrorPropReadTP_num - sim.df$meanerrorPropReadFP_num
-sim.df$meanerrorPropRepsTF_FP_num <- sim.df$meanerrorPropRepsTP_num - sim.df$meanerrorPropRepsFP_num
-sim.df$meanerrorPropReadRepsTF_FP_num <- sim.df$meanerrorPropReadRepsTP_num - sim.df$meanerrorPropReadRepsFP_num
+sim.df$HardCut_ratio <- sim.df$HardCut_TP_num - sim.df$meanerrorHardCut_FP_num
+sim.df$PropRead_ratio <- sim.df$PropRead_TP_num - sim.df$meanerrorPropRead_FP_num
+sim.df$PropReps_ratio <- sim.df$PropReps_TP_num - sim.df$meanerrorPropReps_FP_num
+sim.df$PropReadReps_ratio <- sim.df$PropReadReps_TP_num - sim.df$PropReadReps_FP_num
 
-#(sim.df$meanerrorHardCutTP_num - sim.df$meanerrorHardCutFP_num)
-#(sim.df$meanerrorPropReadTP_num - sim.df$meanerrorPropReadFP_num)
-#(sim.df$meanerrorPropRepsTP_num - sim.df$meanerrorPropRepsFP_num)
-#(sim.df$meanerrorPropReadRepsTP_num - sim.df$meanerrorPropReadRepsFP_num)
+#(sim.df$HardCut_TP_num - sim.df$meanerrorHardCutFP_num)
+#(sim.df$PropRead_TP_num - sim.df$meanerrorPropReadFP_num)
+#(sim.df$PropReps_TP_num - sim.df$meanerrorPropRepsFP_num)
+#(sim.df$PropReadsReps_TP_num - sim.df$PropReadReps_FP_num)
 
 #sim.df$meanerrorHardCutFP <- sim.df$meanerrorHardCutFP
 #sim.df$meanerrorPropReadFP <- sim.df$meanerrorPropReadFP
 #sim.df$meanerrorPropRepsFP <-  sim.df$meanerrorPropRepsFP
-#sim.df$meanerrorPropReadRepsFP <-  sim.df$meanerrorPropReadRepsFP
+#sim.df$PropReadReps_FP <-  sim.df$PropReadReps_FP
 
 
-#sim.df$meanerrorHardCutTP <- sim.df$meanerrorHardCutTP 
-#sim.df$meanerrorPropReadTP <- sim.df$meanerrorPropReadTP 
-#sim.df$meanerrorPropRepsTP <- sim.df$meanerrorPropRepsTP 
-#sim.df$meanerrorPropReadRepsTP <- sim.df$meanerrorPropReadRepsTP
+#sim.df$HardCut_TP <- sim.df$HardCut_TP 
+#sim.df$PropRead_TP <- sim.df$PropRead_TP 
+#sim.df$PropReps_TP <- sim.df$PropReps_TP 
+#sim.df$PropReadsReps_TP <- sim.df$PropReadsReps_TP
 ```
 
 In order to facet the plots, we need to group the four columns that contain the values we care about, and create a label column:
@@ -279,29 +280,34 @@ sim.df$meanerrorPropReadRepsTF_FP_num
 
 ```{r}
 sim.df_all <- sim.df %>%
-  # new column a name, new column b name, what do we want the values of
-  gather(method, mean, 5:16) %>%
+# new column a name, new column b name, what do we want the values of
+  gather(method, mean, c(5:8, 9:12, 27:30)) %>%
+  separate(method, into = c('method', 'error'), sep = "_")
+  #gather(method, mean, c(5:16,21:24)) %>%
   #gather(method, mean2, 21:24) %>%
   # clean up the first column names to not have their underscore suffixes
-  separate(method, into = c('method', 'error'), sep = -2, convert = TRUE) 
+  #separate(method, into = c('method', 'error'), sep = -2, convert = TRUE) 
+
+unique(sim.df_all$method)
 
 sim.df_all$method <- as.factor(sim.df_all$method)
 sim.df_all$error <- as.factor(sim.df_all$error)
+
 
 sim.df_all <- sim.df_all %>%
   # I'm refactoring the levels to have pretty names but
   # if you run 
   # unique(sim.df_all$method)
   # there's 8 levels?? Shouldn't we only have 4??) ##yes, I relabeled the extra columns.
-    mutate(method = factor(method, levels = c("meanerrorHardCut", "meanerrorHardCutFP_n",
-                                            "meanerrorPropRead",  "meanerrorPropReadFP_n",
-                                          "meanerrorPropReadReps","meanerrorPropRepsFP_n",
-                                          "meanerrorPropReps", "meanerrorPropReadRepsFP_n"), labels = c("Hard Cutoff","Hard Cutoff", "Proportion of Sequence Reads", "Proportion of Sequence Reads","Proportion of Sequence Reads and Replicates","Proportion of Sequence Reads and Replicates", "Proportion of Replicates","Proportion of Replicates" )))
+    mutate(method = factor(method, levels = c("HardCut"  ,    "PropRead"   ,  "PropReps"   ,  "PropReadReps"
+    ), labels = c("Hard Cutoff", "Proportion of Sequence Reads", "Proportion of Replicates", "Proportion of Sequence Reads and Replicates")))
 
+
+unique(sim.df_all$error)
 # I had the code so that we can split on the underscore, then create this error column for if the values are
 # FP, TF, of TP but I don't think this works given the new names in the column?
 sim.df_all <- sim.df_all %>%
-    mutate(error = factor(error, levels = c("FP", "um", "TP"), labels = c("False Positive", "TP-FP", "True Positive")))
+    mutate(error = factor(error, levels = c("FP", "ratio", "TP"), labels = c("False Positive", "TP-FP", "True Positive")))
 
 # By factoring the methods (ordered factor) we can plot them in the order we want rather than alphabetically
 sim.df_all$method <- factor(sim.df_all$method, 
@@ -370,6 +376,7 @@ fp_plot <- ggplot(fp, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))
 ```{r}
 tf <- sim.df_all %>%
   filter(sim.df_all$error == "TP-FP")
+
 
 tf_plot <- ggplot(tf, aes(x = as.factor(corenoncoreratio), y = as.factor(theta))) +
   geom_tile(aes(fill = mean), colour = "white") +
